@@ -186,11 +186,11 @@ jianshu.com  coderwhy
 
 ##### Vue.extend
 
-![image-20210608155948740](C:\Users\cmrsa\AppData\Roaming\Typora\typora-user-images\image-20210608155948740.png)
+![image-20210608155948740](./imgs/image-20210608155948740.png)
 
 ##### extend 与 component
 
-![image-20210608155846601](C:\Users\cmrsa\AppData\Roaming\Typora\typora-user-images\image-20210608155846601.png)
+![image-20210608155846601](./imgs/image-20210608155846847.png)
 
 #### 14.组件化-注意点
 
