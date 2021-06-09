@@ -138,6 +138,79 @@ es6的let&const是有块级作用域的
 6.arr[i]=newVal 不是响应式的，Vue.$set(arr,i,newVal)解决
 ```
 
+#### 11.过滤器-filter
+
+```js
+...template
+{{params | filterName}}
+
+...script
+filters:{
+    filterName(param){
+        return `edit${param}`;
+    }
+}
+```
+
+#### 12.v-model
+
+```js
+1》原理：
+	v-bind:  v-on: 的结合
+	用v-bind指令绑定需要更新的值,v-on绑定会即时触发的事件回调.
+2》修饰符
+	lazy:失去焦点或者回车时，数据才会更新
+	number:在数据绑定时，将数据转换为number类型，默认为string
+    trim:去除数据两端的空格
+```
+
+#### 13.组件化
+
+jianshu.com  coderwhy
+
+```
+1》创建组件构造器对象
+	Vue.extend({
+		template:'',
+		...
+	});
+2》全局注册|局部注册
+   父级组件|子级组件
+3》语法糖 =》 直接通过Vue.component(name,{})注册全局组件，对于{}，vue底层自动调用了Vue.extend({});	
+4》 template 抽离
+	方式1：在html中创建script把标签，类型为text/x-template，添加Id选择器
+	<script type="text/x-template" id="test"></script>
+	然后在创建component的template属性后通过#test关联模板
+	方式2：把script标签替换为template标签；
+```
+
+##### Vue.extend
+
+![image-20210608155948740](C:\Users\cmrsa\AppData\Roaming\Typora\typora-user-images\image-20210608155948740.png)
+
+##### extend 与 component
+
+![image-20210608155846601](C:\Users\cmrsa\AppData\Roaming\Typora\typora-user-images\image-20210608155846601.png)
+
+#### 14.组件化-注意点
+
+```js
+1》data必须为函数  每个组件实例都需要有自己的一个状态，函数每次返回的对象都是一个拥有新的内存地址的对象，在组件复用时，相互之间不会产生影响。
+2》父子组件之间的通信  
+	父=>子: props：object|array
+			{
+                type:...,
+                default:当type为Object|Ayyay时，default的值在vue2.5.17(大概)之后必须是通过
+                factory-function 生成的 ，例如default()=> [],在此版本之前不受影响;
+                required:Boolean,
+                validator:Function 自定义校验
+            }
+    	
+	子=》父: emit(自定义事件): Function
+```
+
+
+
 
 
 
