@@ -237,9 +237,7 @@ jianshu.com  coderwhy
             父组件：v-slot:名称="实例对象" ， 简写 #名称="实例对象" //实例对象:{属性,...}
 	   Vue 2.6.0 之前 
         	子组件：name="名称" :属性=""
-            父组件：slot="名称" slot-scope="实例对象"
-    
-
+            父组件：slot="名称" slot-scope="实例对象"    
 ```
 
 
