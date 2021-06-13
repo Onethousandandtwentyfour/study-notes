@@ -208,5 +208,129 @@ active-class 页面显示为当前路由时，对应router-link的dom节点会�
 
 $router 对象控制
 
+###### 2.4.3.5 动态路由
+
+router/index.js
+
+```js
+//路由映射关系
+const routes=[
+	{
+		path:'/path/:params',//路由地址/:参数
+		component:VueComponent ,//当前路由下限显示的内容
+		...//其他选项
+	}
+];
+```
+
+App.vue
+
+```vue
+<router-link to="/path/lalala">[name]</router-link>
+```
+
+VueComponent.vue获取参数
+
+```js
+//$route  当前活跃路由对象
+{
+    fullPath: "/about2/lalallal"
+	hash: ""
+	matched: [{…}]
+	meta: {}
+	name: undefined
+	params: {args: "lalallal"}
+	path: "/about2/lalallal"
+	query: {}
+}
+$route.params.args 获取当前路由携带的参数
+```
+
+###### 2.4.3.6 路由打包文件的解析
+
+默认webpack会将js&css打包到一个js文件，导致文件比较大，下载比较耗时；
+
+所以vue-cli会将js|css分离且分别打包到不同的文件；
+
+vue-cli-2.x
+
+js文件夹下 app.xxx.js 代表 当前应用程序开发的所有代码（业务代码）
+
+​					vendor.xxx.js 代表 第三方包
+
+​					manifest.xxx.js 为打包的代码做底层支持；导入导出的映射规则；
+
+###### 2.4.3.7 路由懒加载
+
+当项目业务比较复杂时，app.xxx.js文件会变得特别大；所以需要将app.xxx.js进行分割，
+
+路由配置中通过 懒加载 导入组件后裔，打包时会将懒加载的组件生成一个独立的js文件，通过这种方式，实现app.xxx.js的分割
+
+懒加载写法： router/index.js
+
+```js
+route:[
+    {
+        path:'/home',
+        component:()=> import('path'),
+    }
+]
+```
+
+![image-4b57fcc0fbdb3ed8bbb36bbcc8a5254.png](./imgs/4b57fcc0fbdb3ed8bbb36bbcc8a5254.png)
+
+###### 2.4.3.8 路由嵌套
+
+```js
+# 方式一
+{
+    path:'/home',
+    component:VueComponent1,
+    children:[
+        {
+          path:'',
+          component:VueComponent2,
+          //redirect:'/child1',//此方式效果类似与 方式二
+        },
+        {
+          path:'child1',
+          component:VueComponent2,
+        },
+        //地址上显示 localhost:8080/home 内容显示 VueComponent1 + VueComponent2
+        //前提是 VueComponent1 中有 <router-view/> 标签来显示此路由下的子路由
+    ]
+}
+# 方式二
+{
+    path:'/home',
+    component:VueComponent1,
+    redirect:'/home/child1',
+    children:[
+        {
+            path:'child1',
+            component:VueComponent2,
+        },
+        //地址上显示 localhost:8080/home/child1 内容显示 VueComponent1 + VueComponent2
+        //前提是 VueComponent1 中有 <router-view/> 标签来显示此路由下的子路由
+    ]
+}
+```
+
+###### 2.4.3.9 路由传参
+
+方式一： 动态路由，同 2.4.3.5；参数在params参数中；且必须有一个参数值，没有整个路由将不会显示；
+
+方式二：1.路由格式： /path  普通配置方式
+
+​				2.传参方式： {path:'/path',query:{id:1,name:'lalala'}}
+
+​				3.取值方式：$route.params.query
+
+url =》   协议://主机:端口/路径?query =》scheme://home:port/path?query#fragment  =》protocol//hostname:port/path?query
+
+###### 2.4.3.10 $router 和 $route 由来
+
+
+
 
 
