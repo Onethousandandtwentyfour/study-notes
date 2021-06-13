@@ -9,7 +9,7 @@ git clone https://github.com/Onethousandandtwentyfour/study-notes.git
 ```
 
 - 不需要用户名和密码；
-- 提交又是会链接不到仓库
+- 提交有时会链接不到仓库
 
 ##### 1.2 SSH
 
