@@ -1,4 +1,212 @@
 # Vue-Cli-笔记
 
-### 1.VueCli-2
+Command-Line Interface 命令行 ，俗称`脚手架`
+
+### 1.VueCli
+
+安装 ：
+
+```js
+npm i -g @vue/cli  // cli-3 可以生成vue-cli2的模板和vue-cli3的模板
+
+```
+
+扩展：
+
+node  是c++写的，通过v8引擎（google）支持，将js解析为二进制文件，然后执行
+
+比普通浏览器 将js解析为字节码执行 效率要高；
+
+#### 1.1 拉取模板
+
+runtime-compile  =》 template --  ast -- render -- vdom -- ui
+
+runtime-only  =》  render -- vdom -- ui
+
+组件内的template是由vue-template-compiler解析的
+
+- 拉取2.x模板
+
+通过@vue/cli 拉取vue-cli2的模板，需要安装一个桥接工具 npm i -g @vue/cli-init
+
+  命令行拉取
+
+```js
+vue init webpack [projectName]
+```
+
+- 拉取3.x模板
+
+命令行拉取
+
+```js
+vue create
+```
+
+Progressive web app  support 新特性  包含 app推送通知，本地存储等功能；
+
+-  cli-2.x与3.x区别
+
+![image-20210613154010652](./imgs/03346b954264770c28839ceed7dc9d1.png)
+
+- cli-3.x配置文件
+
+  ​	1.通过 vue ui 打开图形化界面 进行配置
+
+  ​	2.node_modules 中 @vue/cli-service/lib  查看配置项（不要修改）
+
+  ​	3.在项目根目录下创建vue.config.js，写入自定义配置，vue在运行时会合并这些配置
+
+#### 1.2 可能出现的安装不了的异常
+
+1. 已管理员身份打开cmd面板
+2. 使用命令行 删除 c://users/[userName]/AppData/Roaming/npm-cache  
+
+```js
+npm clean cache --force
+```
+
+#### 1.3 补充知识
+
+es6中
+
+箭头函数
+
+对象字面量增强写法
+
+### 2.Vue-Router
+
+#### 2.1 基础
+
+![image-20210613165858402](./imgs/cfdd731a327e6d22aa48a59e7c45c70.png)
+
+#### 2.2 前端渲染&路由|后端渲染&路由
+
+后端渲染：后端同过jsp生成页面返回到浏览器；
+
+后端路由：后端处理url和页面之间的映射关系；不同的url返回不同的jsp;
+
+**随着ajax的出现，出现了前后端分离；后端只提供数据；前端负责页面显示**
+
+前端渲染：浏览器通过url到静态资源服务器上下载html+css+js资源，js中ajax请求数据，更新页面；
+
+前端路由：前端处理url和页面之间的映射关系；不同的url返回不同的html+css+js（component）组成的页面；
+
+SPA  单页富应用 =》 一个url对应一个页面 =》从始至终只有一个html文件 =》需要有一套路由规则做支撑；
+
+#### 2.3  Router =》 改变url，但是页面不刷新
+
+##### 2.3.1 url的hash
+
+location.hash
+
+##### 2.3.2 html5的history
+
+histort.pushState
+
+自己维护一个栈结构：先进后出，后进先出；
+
+history.replaceState
+
+history.back() == history.go(-1)
+
+history.forward() == history.go(1);
+
+#### 2.4 Vue-Router
+
+##### 2.4.1  安装
+
+```js
+npm i vue-router --save
+```
+
+##### 2.4.2 使用
+
+-  新建router/index.js
+
+```js
+import Vue from 'vue';//导入vue
+import VueRouter from 'vue-router';//导入vue-router
+
+Vue.use(VueRouter);//给vue安装vue-router插件
+
+//导入组件
+import VueComponent from 'path';
+
+//路由映射关系
+const routes=[
+	{
+		path:'',//路由地址
+		component:VueComponent ,//当前路由下限显示的内容
+		...//其他选项
+	}
+];
+
+//路由实例
+const routers = new VueRouter({
+	routes,
+});
+
+export default routers;//导出路由实例
+```
+
+- 在main.js中 挂载 路由
+
+  ```js
+  import router from './router';
+  new Vue({
+      router,
+  })
+  ```
+
+- 在App.vue 中通过 **router-link** 和 **router-view** 分别进行切换和显示
+
+```vue
+<template>
+    <div>
+        <router-link to="path" >[text]</router-link>
+        <router-view />
+    </div>
+</template>
+```
+
+##### 2.4.3 配置
+
+###### 2.4.3.1 默认路由
+
+```js
+//router/index.js
+const routes=[{
+    path:'',  // '/' == ''
+    redirect:'/home',
+},{
+     path:'/home',
+     component:VueComponent
+}];
+```
+
+###### 2.4.3.2 更换路由模式
+
+默认hash模式，修改为history模式
+
+```js
+//router/index.js
+const router = new VueRouter({
+	mode:'history',
+});
+```
+
+###### 2.4.3.3  router-link 属性补充
+
+tag  router-link 默认会被渲染为a标签，tag属性可以指定router-link被渲染后的标签
+
+replace  router可以返回，replace属性类似于history.replaceState
+
+active-class 页面显示为当前路由时，对应router-link的dom节点会被添加一个router-link-active样式，active-class可以修改router-link-active，有一个统一的修改方式，在router/index.js中，router['linkActiveClass'] =' 新名称'；
+
+###### 2.4.3.4 通过代码控制路由跳转
+
+$router 对象控制
+
+
 
