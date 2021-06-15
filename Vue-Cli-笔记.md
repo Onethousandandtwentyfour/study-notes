@@ -330,6 +330,86 @@ url =》   协议://主机:端口/路径?query =》scheme://home:port/path?query
 
 ###### 2.4.3.10 $router 和 $route 由来
 
+Vue.use(VueRouter) ，vue会执行vue-router内置 的install方法，install中在vue对象的原型上添加了$router和$route属性，main.js中new Vue({vueRouter})时，会给当前实例的$router和$route属性赋值；
+
+所有的vue组件都继承了vue对象；
+
+###### 2.4.3.11 路由守卫
+
+-  全局守卫
+
+前置守卫 guard
+
+```js
+router.beforeEach((to,form,next)=>{
+
+...业务代码
+
+next();
+
+//false 停止跳转路由   path 跳转到指定路由
+
+})；
+```
+
+后置钩子 hook
+
+```js
+router.after((to,form)=>{
+
+...业务代码
+
+})
+```
+
+- 路由独享守卫
+
+在router的路由配置中
+
+```js
+{
+    path:'',
+    component：VueComponent,
+    meta:{//元数据 同于描述当前路由对象
+        title:''
+    }，
+    beforeEnter(to,from,next){
+        //当前路由-前置守卫
+    }
+}
+```
+
+- 组件内的守卫
+
+在组件对象中
+
+```js
+export default {
+    template:'...',
+    beforeRouteEnter(to,from,next){},
+    beforeRouteUpdate(to,from,next){},    //vue-router  2.2 新增
+    beforeRouteLeave(to,from,next){},
+}
+```
+
+###### 2.4.3.12 keep-alive
+
+对应的生命收起函数
+
+activated    被keep-alive缓存的组件处于活跃时触发
+
+deactivated  组件被keep-alive缓存时触发
+
+属性
+
+include :string|RegExp   = "VueComponent-name,VueComponent-name"
+
+exclude:string|RegExp   = "VueComponent-name,VueComponent-name" 
+
+
+
+### 3.Vuex
+
 
 
 
