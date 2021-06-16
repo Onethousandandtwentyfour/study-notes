@@ -2,7 +2,7 @@
 
 Command-Line Interface 命令行 ，俗称`脚手架`
 
-### 1.VueCli
+## 1.VueCli
 
 安装 ：
 
@@ -74,7 +74,7 @@ es6中
 
 对象字面量增强写法
 
-### 2.Vue-Router
+## 2.Vue-Router
 
 #### 2.1 基础
 
@@ -408,7 +408,343 @@ exclude:string|RegExp   = "VueComponent-name,VueComponent-name"
 
 
 
-### 3.Vuex
+## 3.Vuex
+
+### 3.1 理解&定义
+
+
+
+### 3.2 使用
+
+#### 3.2.1 安装
+
+```js
+npm i vuex --save
+```
+
+#### 3.2.2 创建实例&配置
+
+新建store/index.js
+
+```js
+import Vue from 'vue';
+import Vuex from 'vuex';
+
+//安装
+Vue.use(Vuex);//vue的prototype上添加$store属性
+
+//全局状态
+const state = {
+	appName:'vue-cli-3.x',
+};
+
+//状态管理对象
+const store = new Vuex.Store({
+	state,
+    
+});
+
+//导出
+export default store;
+```
+
+在main.js入口文件，将store对象传递给vue构造函数，这样产生的Vue的实例的就可以用过$store属性访问state内的属性（状态），且这些属性都是响应式的；
+
+```js
+import Vue from 'vue';
+import store from '/store';
+new Vue({
+    store,
+}).$mount('#app')；
+```
+
+#### 3.2.3 Vuex.Store属性
+
+##### 官方建议修改state值的方式
+
+![Snipaste_2021-06-16_11-37-27](./imgs/Snipaste_2021-06-16_11-37-27.png)
+
+##### 3.2.3.1 mutations 
+
+用于修改store中state的属性值，通过mutations更改state的值后，在vue-devtools中的store选项中会有操作记录，方便开发调试；
+
+###### 使用风格一：
+
+this.$store.commit('name',params);
+
+携带参数：
+
+```js
+mutations:{
+    /*
+		type:mutations,
+		handler:(state,inParams){},
+		@state store.state,
+		@inParams $store.commit('name',params) 中的 params
+    */
+    mutations(state,inParams){
+        
+    }
+}
+```
+
+######  使用风格二：
+
+const params={name:'123'};
+
+this.$store.commit({
+
+​	type:'mutations',
+
+​	params
+
+});
+
+携带参数：
+
+```js
+mutations:{
+    /*
+		type:mutations,
+		handler:(state,inParams){},
+		@state store.state,
+		@payload $store.commit({type:'mutations',params}) 中的 {type:'mutations',params}
+    */
+    mutations(state,payload){
+        
+    }
+}
+```
+
+###### mutations的响应规则 =》vue的响应式系统 初级理解
+
+对于store内定义的属性，vue底层通过dep（观察者模式）监听属性值的变化，如果其中某个属性改变了，dep被触发了，dep会将引用此属性所有的watch执行一遍，用以即时将其他地方的引用即时更新为最新值；
+
+通过store.state['params']添加的属性不是响应式的，这个属性在vuex初始化的时候不存在，属于后期新增的，没有被dep监听到；如果要新增响应式属性，可以使用Vue.set(object,property,value)实现；
+
+同理，如果要删除响应式的属性且需要页面即时刷新，可以使用Vue.delete(object,property)实现；
+
+###### mutations 的类型常量
+
+将mutations的handler名称抽离出来
+
+```js
+//store.js
+import {HANDLERNAME} from '@/store/mutations-type';
+mutations:{
+    [HANDLERNAME](state,getters){
+        ...
+    }
+}
+```
+
+```js
+//mutations-type.js
+export const HANDLERNAME = 'realHandlerName';
+```
+
+```js
+//component.js
+import {HANDLERNAME} from '@/store/mutations-type';
+methods:{
+    clickHandler(){
+        this.$store.commit(HANDLERNAME);
+    }
+}
+```
+
+##### 3.2.3.2 vuex单一状态树   Single Source Of Truth  =》 单一数据源
+
+官方不建议创建多个store去管理不同类型的全局状态，后期维护比较麻烦；
+
+##### 3.2.3.3 getters 
+
+用于获取stroe中state的值，类似与单组件内的computed属性 ，所以可以在getters中的函数中对返回出的数据做一些修改|整理；
+
+ this.$store.getters.getterName
+
+```js
+getters:{
+    /*
+    * @state store.state
+    * @getters store.getters
+    */
+    gettersName(state,getters){
+        return undefiend;
+    },
+    /*
+    ...
+    @args $store.getters.getterName(params) 中的 params
+    */
+    gettersName(state,getters){
+        return function(args){
+            return undefiend;
+        }
+    }
+}
+```
+
+##### 3.2.3.4 actions
+
+mutations 中如果有异步操作，vue-devtools中的store无法记录此次更新，所以vue提供了actions来做异步操作，在结束异步操作后，再执行mutations操作；
+
+this.$store.dispatch('actionName',params);       //dispatch 分发
+
+```js
+//store.js
+actions:{
+    /*
+    * @context  => store
+    * @payload $store.dispatch('actionName',params) 中的 params
+    */
+    actionName(context，payload){
+        
+    }
+}
+```
+
+小功能，在commit后执行一个回调
+
+```js
+//component.js
+this.$store.dispatch('actionName',{
+    data:'123',
+    success(){
+
+    }
+});
+
+//store.js
+actions:{
+    actionName(context,payload){
+        context.commit(...,payload.data);
+        payload.success&&payload.success();
+    }
+}
+```
+
+以上写法不够优雅，下面是优化写法：
+
+```js
+//component.js
+this.$store.dispatch('actionName','123').then(data=>{
+	//data => 成功啦
+});
+
+//store.js
+actions:{
+    actionName(context,payload){
+        return new Promise((resolve,reject)=>{
+            context.commit(...,payload.data);
+            resolve('成功啦');
+        })
+    }
+}
+```
+
+##### 3.2.3.5 modules 
+
+由于 单一状态树 原则，在状态过多时，store.state会变的特别臃肿，所以vue提供了modules用来定义多个类store的对象；
+
+```js
+import Vuex from 'vuex';
+
+### 规则一
+const ModuleA={
+    state:{},//$store.state.a.properName
+    actions:{},//$store.dispatch('actionName',params);//先在外层actions中匹配actionName,匹配不到再到modules中匹配
+    getters:{},//$store.getters.gettersName;//先在外层getters中匹配gettersName,匹配不到再到modules中匹配
+    mutations:{},//$store.commit(mutationsName);//先在外层mutations中匹配mutationsName,匹配不到再到modules中匹配   
+};
+
+#### 规则二
+const ModuleB={
+    state:{},
+    actions:{
+        /*
+        * @context context.commit()提交的是ModuleB中的mutations
+        */
+        actionName(context,params){
+            //context ... {rootState,rootGetters}
+        }
+    },
+    getters:{
+        //module中的getters如果要调用外层的getters,
+        /*
+        modules中的getters-handler才有以下回调参数
+        * @rootState  外层state
+        * @rootGetters 外层getters 
+        */
+        innerGetters(state,getters,rootState,rootGetters){
+            
+        }
+    },
+    mutations:{}   
+};
+
+const state={};
+const actions={};
+const getters={};
+const mutations={};
+
+const store = new Vuex.store({
+   state, 
+   actions,
+   getters,
+   mutations,
+   modules:{
+       a:ModuleA,
+       b:ModuleB,
+   }
+});
+
+export default store;
+```
+
+### 3.3 store 的目录结构
+
+state 推荐放到index.js文件内；
+
+actions,mutations,getters 推荐抽离到独立的js文件中；
+
+modules 推荐抽离到单独的modules文件夹中；
+
+## 4. Axios 网络模块封装
+
+![Snipaste_2021-06-16_23-24-57.png](./imgs/Snipaste_2021-06-16_23-24-57.png)
+
+### JSONP
+
+![Snipaste_2021-06-16_23-30-48.png](./imgs/Snipaste_2021-06-16_23-30-48.png)
+
+### AXIOS    =?    ajax i/o system 
+
+![Snipaste_2021-06-16_23-34-36.png](./imgs/Snipaste_2021-06-16_23-34-36.png)
+
+#### 1.安装
+
+```js
+npm i --save axios
+```
+
+#### 2.基本使用
+
+ [模拟服务器](https://httpbin.org/)
+
+```js
+import axios from 'axios';
+axios.request({
+ url:'',
+ method:'',//默认get
+ params:{},//method为get时，axios会自动将params拼接到url后面
+});
+```
+
+
+
+
+
+
 
 
 
