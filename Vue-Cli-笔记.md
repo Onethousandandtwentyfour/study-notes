@@ -733,14 +733,135 @@ npm i --save axios
 
 ```js
 import axios from 'axios';
-axios.request({
+axios({
  url:'',
  method:'',//默认get
  params:{},//method为get时，axios会自动将params拼接到url后面
+ data:{}//post
 });
 ```
 
+#### 3.并发请求
 
+axios.all([axios1,axios2]).then(data=>{
+
+​	//data :  Array<Object>(2);
+
+});
+
+对结果进行处理:
+
+axios.all([axios1,axios2]).then(axios.spread((res1,res2)=>{
+
+​	//axios1 => res1
+
+​	//axios2 => res2
+
+}));
+
+#### 4.公共配置
+
+![Snipaste_2021-06-17_14-09-25.png](./imgs/Snipaste_2021-06-17_14-09-25.png)
+
+##### 4.1  全局配置
+
+axios.default 
+
+##### 4.2  单独配置
+
+const axiosInstance  = axios.create(config);
+
+#### 4.3 封装axios模块
+
+将项目中需要发送请求的部分抽离到统一的模块中；
+
+示例： 抽离到network/index.js
+
+```js
+import axios from 'axios';
+//promise封装
+export function AxiosInstance(config){
+    const instance = axios.create({
+       baseUrl:'',
+       timeout:'',
+    });
+    return instance(config);
+}
+//callback封装 1.0
+export function AxiosInstance(config,success:Function,fail:Function){
+    const instance = axios.create({
+       baseUrl:'',
+       timeout:'',
+    });
+    instance(config).then(data=>{
+        success(data);
+    }).catch(reason=>{
+        fail(reason);
+    })
+}
+//callback封装 2.0
+/*
+* @config {
+			url:'',
+			method:'',
+			data:{}
+			params:{},
+			success:Function,
+			fail:Function
+		}
+*/
+export function AxiosInstance(config){
+    const instance = axios.create({
+       baseUrl:'',
+       timeout:'',
+    });
+    instance(config).then(data=>{
+        config.success(data);
+    }).catch(reason=>{
+        config.fail(reason);
+    })
+}
+```
+
+#### 4.4 拦截器  interceptor 
+
+###### 4.4.1 请求拦截器
+
+**[axios|instance]**.interceptors.request.use(config=>{
+
+​	//用途1  修改本次请求的config信息
+
+​	//用途2  请求时页面显示loading
+
+​	//用途3  部分请求需要携带token
+
+return config;
+
+},reason=>{
+
+});
+
+###### 4.4.2 响应拦截器
+
+**[axios|instance]**.interceptors.response.use(res=>{
+
+​	res=》 {
+
+​				header:{},
+
+​				status:200,
+
+​				data:{},
+
+​				...	
+
+​				 }
+
+​		return res.data;
+
+},reason=>{
+
+})
 
 
 
