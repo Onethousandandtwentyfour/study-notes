@@ -51,7 +51,7 @@ Progressive web app  support 新特性  包含 app推送通知，本地存储等
 
 - cli-3.x配置文件
 
-  ​	1.通过 vue ui 打开图形化界面 进行配置
+  ​	1.通过 vue ui 打开图形化界面 进行配置 | vue inspect  命令查看配置
 
   ​	2.node_modules 中 @vue/cli-service/lib  查看配置项（不要修改）
 

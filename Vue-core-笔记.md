@@ -242,23 +242,157 @@ jianshu.com  coderwhy
 
 
 
+# Vue响应式原理
+
+## 1.**[Object.defineProprtty](https://segmentfault.com/a/1190000007434923) :给对象定义新属性或修改原有的属性**
+
+![Snipaste_2021-06-29_15-40-27.png](./imgs/Snipaste_2021-06-29_15-40-27.png)
 
 
 
+### 1.1 **数据描述**
 
+```js
+//当修改或定义对象的某个属性的时候，给这个属性添加一些特性：
+var obj = {
+    test:"hello"
+}
+//对象已有的属性添加特性描述
+Object.defineProperty(obj,"test",{
+    configurable:true | false,
+    enumerable:true | false,
+    value:任意类型的值,
+    writable:true | false
+});
+//对象新添加的属性的特性描述
+Object.defineProperty(obj,"newKey",{
+    configurable:true | false,
+    enumerable:true | false,
+    value:任意类型的值,
+    writable:true | false
+});
+```
 
+- #### **value**
 
+  属性对应的值,可以使任意类型的值，默认为undefined
 
+- #### **writable**
 
+  属性的值是否可以被重写。设置为true可以被重写；设置为false，不能被重写。默认为false
 
+- #### **enumerable**
 
+  此属性是否可以被枚举（使用for...in或Object.keys()）。设置为true可以被枚举；设置为false，不能被枚举。默认为false
 
+- #### **configurable**
 
+  是否可以删除目标属性或是否可以再次修改属性的特性（writable, configurable, enumerable）。设置为true可以被删除或可以重新设置特性；设置为false，不能被可以被删除或不可以重新设置特性。默认为false。
 
+  这个属性起到两个作用：
 
+  1. 目标属性是否可以使用delete删除
+  2. 目标属性是否可以再次设置特性
 
+**提示：一旦使用Object.defineProperty给对象添加属性，那么如果不设置属性的特性，那么configurable、enumerable、writable这些值都为默认的false**
 
+### 1.2 **存取器描述**
 
+```js
+//当使用存取器描述属性的特性的时候，允许设置以下特性属性：
+var obj = {};
+Object.defineProperty(obj,"newKey",{
+    get:function (){} | undefined,
+    set:function (value){} | undefined
+    configurable: true | false
+    enumerable: true | false
+});
+```
 
+**注意：当使用了getter或setter方法，不允许使用writable和value这两个属性**
 
+**注意：get或set不是必须成对出现，任写其一就可以。如果不设置方法，则get和set的默认值为undefined**
+
+**configurable和enumerable同上面的用法。**
+
+### 1.3 兼容性
+
+在ie8下只能在DOM对象上使用，尝试在原生的对象使用 Object.defineProperty()会报错
+
+## 2.响应式
+
+### 2.1 理论
+
+```js
+//普通对象
+const obj = {
+	message:"hello word",
+    name:"原始对象"
+};
+
+//发布者
+class Dep{
+    constructor(){
+        //订阅者集合
+        this.subscribes = [];
+    }
+    
+    //新增订阅者
+    addWatcher(watcher){
+        this.subscribes.push(watcher);
+    }
+    
+    //通知
+    notify(val){
+        this.subscribes.forEach(item=>item.update(val))
+    }
+}
+
+//订阅者
+class Watcher{
+    constructor(name){
+        this.name = name;//订阅者名称
+    }
+    
+    update(val){
+        console.log(this.name+'收到通知',val);
+    }
+}
+
+//订阅发布模式
+Object.keys(obj).forEach(key=>{
+    let value = obj[key];
+    //每个key都会新建一个发布者
+    const dep = new Dep();
+   	//数据监听 =》 添加数据描述 =》 存取器描述
+    Object.defineProperty(obj,key,{
+       	set(newValue) {
+            value = newValue;
+            //有更新，通知所有订阅者
+            dep.notify(newValue);
+        },
+        get(){
+            //如果外部需要在每次值改变的时候即时被通知到，外部需要提供一个订阅实例标识当前订阅者
+            dep.addWatcher(new Watcher('调用者1'));
+            dep.addWatcher(new Watcher('调用者2'));
+            dep.addWatcher(new Watcher('调用者3'));
+            return value;
+        }
+    });
+})
+
+//调用
+console.log('before',obj.name);
+setTimeout(()=>{
+	obj.name= 'obj的name被更新';
+    console.log('after',obj.name);
+},2000);
+
+```
+
+### 2.2 实现简单的响应式
+
+```js'
+
+```
 
