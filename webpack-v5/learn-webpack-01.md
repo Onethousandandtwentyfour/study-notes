@@ -1,3 +1,5 @@
+# 基础
+
 ## 1.前端模块化
 
 为什么模块很重要=》因为有了模块，我们就可以更方便地使用别人的代码，想要什么功能，就加载什么模块；但是，这样做有一个前提，那就是大家必须以同样的方式编写模块，否则你有你的写法，我有我的写法，岂不是乱了套！
@@ -285,6 +287,51 @@ module.exports={
 }
 ```
 
+#### 3.3.5 babel-loader
+
+将项目中es6写法解析为es5写法，用于兼容不支持es6语法的运行环境；
+
+```she
+npm install -D babel-loader @babel/core @babel/preset-env
+```
+
+- `babel-loader` 在webpack里应用babel解析Es6的桥梁
+- `@babel/core`babel核心模块
+- `@babel/preset-env`babel预设，一组babel插件的集合
+
+如果项目中使用了**async/await**实现了一些功能，还需要安装`@babel/runtime`这个**运行时依赖**；
+
+[参考](https://zhuanlan.zhihu.com/p/147083132)
+
+- @babel/runtime提供了regeneratorRuntime对象及实现： webpack打包时会生成一个全局辅助函数regeneratorRuntime，由babel生成regeneratorRuntime的实现，用于兼容async/await语法;
+- `@babel/plugin-transform-runtime`可以将babel中需要的模块按需引入;
+- `@babel/plugin-transform-modules-commonjs`  由于@babel/runtime的模块化导入/导出使用的是ESModule规范，所以需要再安装@babel/plugin-transform-modules-commonjs来加载@babel/runtime中的模块
+
+babel配置:
+
+```js
+module.exports={
+  module:{
+    rules:[
+      {
+        test:/\.js$/,
+        exclude:/node_modules/,//排除node_modules文件夹
+        use:{
+          loader:'babel-loader',
+          options:{
+            preset:['@babel/preset-env'],
+            plugins:[
+               '@babel/plugin-transform-runtime',
+               '@babel/plugin-transform-modules-commonjs'
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
 ### 3.4 资源模块
 
 [资源模块(asset module)是一种模块类型，它允许使用资源文件（字体，图标等）而无需配置额外 loader](https://webpack.docschina.org/guides/asset-modules/#resource-assets)
@@ -437,6 +484,219 @@ module:{
 //方式二 的优先级高于 方式一
 Rule.generator.filename 与 output.assetModuleFilename 相同，并且仅适用于 asset 和 asset/resource 模块类型
 ```
+
+# 其他配置
+
+## 1.代码分离
+
+### 1.1 实现方式
+
+#### 1.1.1使用entry配置手动地分离代码（入口起点）
+
+```js
+const path = require('path');
+module.exports={
+  entry:{
+    index:'./src/main.js',
+    aniother:'./src/another.js',
+  },
+  output:{
+    filename:'[name].bundle.js',
+    path:path.resolve(__dirname,'/mydist'),
+  }
+}
+```
+
+#### 1.1.2 使用entry dependencies 或者 splitChunksPlugin 去重和分离代码（防止重复）
+
+- Entry dependencies
+
+  - ```js
+    module.exports={
+      entry:{
+        index:{
+          import:'./src/main.js'
+          dependOn:'shared'
+        },
+        aniother:{
+          import:'./src/another.js',
+          dependOn:'shared'
+        },
+        shared:'lodash'//index和another中都引入的lodash包会被抽取并打包到shared.js中
+      },
+      output:{
+        filename:'[name].bundle.js',
+        path:path.resolve(__dirname,'/mydist'),
+      }
+    }
+    ```
+
+- splitChunksPlugin (webpack内置)
+
+  - ```js
+    module.exports={
+      entry:{
+        index:'./src/main.js',
+        aniother:'./src/another.js',
+      },
+      output:{
+        filename:'[name].bundle.js',
+        path:path.resolve(__dirname,'/mydist'),
+      },
+      optimization:{
+        splitChunks:{
+          chunks:'all'
+        }
+      }
+    }
+    ```
+
+#### 1.1.3 通过模块的内联函数调用来分离代码（动态导入）
+
+将多个组件内都使用的文件抽取到一个公共文件内（在公共文件内通过import异步加载模块），其他组件引用这个公共文件，同时开启splitChunks，webpack在编译时会将公共文件编译到一个文件内，无论被引用多少次，只编译一次公共文件；
+
+##### 1.1.3.1 懒加载
+
+举例：可以在btn的回调事件中通过**import(模块路径)**异步加载所需模块，用到时再加载;
+
+```js
+btn.onclick=function(){
+  import('模块路径').then(module=>{
+    //toDoList
+  })
+}
+```
+
+##### 1.1.3.2 预加载(通过注释开启)
+
+```js
+//prefetch
+btn.onclick=function(){  
+  import(/*webpackChunkName:'abc',webpackPrefetch:true */'模块路径').then(module=>{    
+    //toDoList  
+  })
+}
+//preload和懒加载相似
+btn.onclick=function(){  
+  import(/*webpackChunkName:'abc',webpackPreload:true */'模块路径').then(module=>{    
+    //toDoList  
+  })
+}
+```
+
+## 2.outPut
+
+### 2.1 输出文件的文件名
+
+```js
+module.exports={
+  output:{
+    filename:'[name].[contenthash].js'
+  }
+}
+```
+
+### 2.2 缓存第三方库文件
+
+第三方库文件的特点：都放在node_modules文件夹下
+
+```js
+module.exports={
+  optimization:{
+    splitChunks:{
+      cacheGroups:{
+        vendor:{
+          test:/[\\/]node_modules[\\/]/,//正则匹配
+          name:'vendor',//打包后的文件前缀名称
+          chunks:'all'
+        }
+      }
+    }
+  }
+}
+```
+
+### 2.3 将js文件放入同一个文件
+
+```js
+module.exports={
+  output:{
+    filename:'myscript/[name].[contenthash].js'
+  }
+}
+```
+
+## 3.拆分开发环境和生成环境
+
+### 3.1 公共路径
+
+```js
+module.exports={
+  output:{
+    publicPath:'./'
+  }
+}
+```
+
+### 3.2 环境变量
+
+- 自定义配置文件
+
+```js
+//webpack.config.js
+module.exports=(env)=>{
+  	//返回函数可以获取到环境参数
+  	return {
+      
+    }
+}
+//在项目根目录下创建webpack.config.dev.js和webpack.config.pro.js分别存放开发和生成的配置信息
+//新增npm命令 
+scripts:{
+  "serve":"npx webpack server -c ./config/webpack.config.dev.js",
+  "build":"npx webpack -c ./config/webpack.config.pro.js",
+}
+//-c === --config
+//webpack server === webpack-dev-server 
+```
+
+- 提取公共配置
+
+  - 可以将webpack.config.dev.js和webpack.config.pro.js的相同配置抽取到webpack.config.common.js中
+
+- 合并配置
+
+  - `webpack-merge`   npm i webpack-merge -D
+
+  - 在webpack.config.js中将环境配置和公共配置进行合并
+
+    - ```js
+      //webpack.config.js
+      const {merge} = require('webpack-merge'),
+            commonConfig = require('./webpack.config.common.js'),
+            devConfig = require('./webpack.config.dev.js'),
+            proConfig = require('./webpack.config.pro.js');
+      module.exports=(env)=>{
+        switch(true){
+          case env.development:
+            	return merge(commonConfig,devConfig);
+          case env.production:
+            	return merge(commonConfig,proConfig);
+          default:
+            	return new Error('no matching configuration was found');
+        }
+      }
+      
+      //然后修改pageage.json中的命令配置
+      scripts:{
+        "serve":"npx webpack server -c ./config/webpack.config.js --env developemnt",
+        "build":"npx webpack -c ./config/webpack.config.js --env production",
+      }
+      ```
+
+
+
+
 
 
 
