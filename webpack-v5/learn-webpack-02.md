@@ -18,15 +18,15 @@
 
 #### 1.1.2 devServer
 
-- `static`
+- `static`  
 
-- `compress`
+- `compress` Boolean 是否开启gzip压缩
 
-- `port`
+- `port`  String 端口号
 
-- `headers`
+- `headers`  Object  请求头
 
-- `poxy`
+- `poxy`  Object 请求代理
 
   - 使用node的**http**模块编写一个简单的服务
 
@@ -34,6 +34,17 @@
   const http = require('http');
   ```
 
-- `https`
-- `http2`
-- 
+- `https`  Boolean | Object  
+- `http2`  Boolean | Object  
+- `historyApiFallback`    
+- `host` 相同局域网下其他设备可以根据这里设置的ip访问本机项目
+- `hot` 
+- `liveReload` 
+
+### 1.1.3 Eslint
+
+### 1.1.4 githooks-husky
+
+自定义git提交过程中的hooks回调
+
+[Husky]([typicode.github.io/husky](https://typicode.github.io/husky))
