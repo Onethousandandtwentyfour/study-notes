@@ -1,8 +1,20 @@
-console.log("===content.js===");
-let newDiv = document.createElement("div");
-let interval = 0;
+//更新窗口尺寸
+let screenWidth = document.documentElement.clientWidth || window.innerWidth;
+let screenHeight = document.documentElement.clientHeight || window.innerHeight;
+window.addEventListener("resize", function () {
+  screenWidth = document.documentElement.clientWidth || window.innerWidth;
+  screenHeight = document.documentElement.clientHeight || window.innerHeight;
+});
 
-newDiv.innerHTML = `<div id="wrapper">
+let interval = 0;
+//喝水助手启动
+function launch() {
+  console.log("===content.js.launch===");
+  const existDom = document.querySelector("#newDiv");
+  if (existDom) return;
+  clearInterval(interval);
+  let newDiv = document.createElement("div");
+  newDiv.innerHTML = `<div id="wrapper">
    <div id="rain-bg" class="_rain-bg">
       <div class="_eye _l"></div>
       <div class="_eye _r"></div>
@@ -14,104 +26,104 @@ newDiv.innerHTML = `<div id="wrapper">
       <button id="cancel">去喝水</button>
       <button id="reject" >不喝</button>
     </div>
-</div>`;
-newDiv.id = "newDiv";
-document.body.appendChild(newDiv);
-const cancelBtn = document.querySelector("#cancel");
-const rejectBtn = document.querySelector("#reject");
-const workTimeDom = document.querySelector("#work-time");
-const rainBg = document.querySelector("#rain-bg");
+  </div>`;
+  newDiv.id = "newDiv";
+  document.body.appendChild(newDiv);
+  const cancelBtn = document.querySelector("#cancel");
+  const rejectBtn = document.querySelector("#reject");
+  const workTimeDom = document.querySelector("#work-time");
+  const rainBg = document.querySelector("#rain-bg");
+  // 添加鼠标拖拽功能
+  let isDragging = false;
+  let offsetX, offsetY;
+  newDiv.addEventListener("mousedown", function (e) {
+    isDragging = true;
+    offsetX = e.clientX - newDiv.getBoundingClientRect().left;
+    offsetY = e.clientY - newDiv.getBoundingClientRect().top;
+  });
 
-// 添加鼠标拖拽功能
-let isDragging = false;
-let offsetX, offsetY;
+  document.addEventListener("mousemove", function (e) {
+    if (isDragging) {
+      newDiv.style.transform = `translate(${e.clientX - offsetX}px, ${
+        e.clientY - offsetY
+      }px)`;
+    }
+  });
 
-newDiv.addEventListener("mousedown", function (e) {
-  isDragging = true;
-  offsetX = e.clientX - newDiv.getBoundingClientRect().left;
-  offsetY = e.clientY - newDiv.getBoundingClientRect().top;
-});
+  document.addEventListener("mouseup", function () {
+    isDragging = false;
+  });
+  //去喝水
+  cancelBtn.onclick = function () {
+    clearInterval(interval);
+    document.body.removeChild(newDiv);
+    clearInterval(interval);
+    chrome.storage.sync.set({ state: Date.now() }, () => {});
+    sendMessageToBackground("喝水提醒");
+  };
+  //不喝水
+  let boxW = 0;
+  let boxH = 0;
+  rejectBtn.onclick = function () {
+    if (!boxW || !boxH) {
+      boxW = newDiv.offsetWidth;
+      boxH = newDiv.offsetHeight;
+    }
 
-document.addEventListener("mousemove", function (e) {
-  if (isDragging) {
-    newDiv.style.transform = `translate(${e.clientX - offsetX}px, ${
-      e.clientY - offsetY
-    }px)`;
-  }
-});
+    // 添加随机位置功能
+    newDiv.style.transform = `translate(${
+      Math.random() * (screenWidth - boxW) + 10 + "px"
+    },${Math.random() * (screenHeight - boxH) + 10 + "px"})`;
+  };
+  //更新已工作时间
+  interval = setInterval(() => {
+    const { workTime, overTime, workStatus } = getWorkTime();
+    const hours = parseInt((workTime / 60 / 60) % 24);
+    const minutes = parseInt((workTime / 60) % 60);
+    const seconds = parseInt(workTime % 60);
 
-document.addEventListener("mouseup", function () {
-  isDragging = false;
-});
+    let innerHTML = `【${workStatus}】<br/>已工作${String(hours).padStart(
+      2,
+      0
+    )}小时${String(minutes).padStart(2, 0)}分${String(seconds).padStart(
+      2,
+      0
+    )}秒`;
+    if (overTime > 0) {
+      const overHours = parseInt((overTime / 60 / 60) % 24);
+      const overMinutes = parseInt((overTime / 60) % 60);
+      const overSeconds = parseInt(overTime % 60);
+      innerHTML += `<br/>已加班${String(overHours).padStart(2, 0)}时${String(
+        overMinutes
+      ).padStart(2, 0)}分${String(overSeconds).padStart(2, 0)}秒`;
+    }
+    workTimeDom.innerHTML = innerHTML;
 
-cancelBtn.onclick = function () {
-  clearInterval(interval);
-  document.body.removeChild(newDiv);
-  // chrome.storage.sync.set({ state: "cancel" }, (data) => {});
-  sendMessageToBackground("喝水提醒");
-};
-
-//重新分配位置
-let screenWidth = document.documentElement.clientWidth || window.innerWidth;
-let screenHeight = document.documentElement.clientHeight || window.innerHeight;
-window.addEventListener("resize", function () {
-  screenWidth = document.documentElement.clientWidth || window.innerWidth;
-  screenHeight = document.documentElement.clientHeight || window.innerHeight;
-});
-
-let boxW = 0;
-let boxH = 0;
-rejectBtn.onclick = function () {
-  if (!boxW || !boxH) {
-    boxW = newDiv.offsetWidth;
-    boxH = newDiv.offsetHeight;
-  }
-
-  // 添加随机位置功能
-  newDiv.style.transform = `translate(${
-    Math.random() * (screenWidth - boxW) + 10 + "px"
-  },${Math.random() * (screenHeight - boxH) + 10 + "px"})`;
-};
-
-//更新已工作时间
-interval = setInterval(() => {
-  const { workTime, overTime, workStatus } = getWorkTime();
-  const hours = parseInt((workTime / 60 / 60) % 24);
-  const minutes = parseInt((workTime / 60) % 60);
-  const seconds = parseInt(workTime % 60);
-
-  let innerHTML = `【${workStatus}】<br/>已工作${String(hours).padStart(
-    2,
-    0
-  )}小时${String(minutes).padStart(2, 0)}分${String(seconds).padStart(2, 0)}秒`;
-  if (overTime > 0) {
-    const overHours = parseInt((overTime / 60 / 60) % 24);
-    const overMinutes = parseInt((overTime / 60) % 60);
-    const overSeconds = parseInt(overTime % 60);
-    innerHTML += `<br/>已加班${String(overHours).padStart(2, 0)}时${String(
-      overMinutes
-    ).padStart(2, 0)}分${String(overSeconds).padStart(2, 0)}秒`;
-  }
-  workTimeDom.innerHTML = innerHTML;
-
-  // 更新rainBg的自定义CSS属性
-  const randomX = Math.random() * 12 - 6; // 生成-6px到6px之间的随机值
-  const randomY = Math.random() * 12 - 6; // 生成-6px到6px之间的随机值
-  rainBg.style.setProperty("--eye-transform-x", `${randomX}px`);
-  rainBg.style.setProperty("--eye-transform-y", `${randomY}px`);
-}, 1000);
-
-// 添加工具函数，用于向 background.js 发送消息
-function sendMessageToBackground(message) {
-  chrome.runtime.sendMessage({ action: "createNotification", data: message });
+    // 更新rainBg的自定义CSS属性
+    const randomX = Math.random() * 12 - 6; // 生成-6px到6px之间的随机值
+    const randomY = Math.random() * 12 - 6; // 生成-6px到6px之间的随机值
+    rainBg.style.setProperty("--eye-transform-x", `${randomX}px`);
+    rainBg.style.setProperty("--eye-transform-y", `${randomY}px`);
+  }, 1000);
 }
-
+//添加onMessage
+function onMessageFromBackground() {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "content-launch") {
+      launch();
+    }
+  });
+}
+// 添加sendMessage，用于向 background.js 发送消息
+function sendMessageToBackground(message, action = "createNotification") {
+  chrome.runtime.sendMessage({ action, data: message });
+}
+// 快捷处理日期时间
 function setHours(...p) {
   const date = new Date();
   date.setHours(...p);
   return date;
 }
-
 //获取已工作时间 & 加班时间
 function getWorkTime() {
   //当日已工作时间 => 单位s
@@ -162,3 +174,6 @@ function getWorkTime() {
   overTime = Math.floor(overTime / 1000);
   return { workTime, overTime, workStatus };
 }
+
+onMessageFromBackground();
+sendMessageToBackground("", "tab-created");

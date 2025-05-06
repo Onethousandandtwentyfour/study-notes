@@ -16,8 +16,10 @@
     "sidePanel",
     "storage",
     "contextMenus",
-    "notifications"
+    "notifications",
+    "scripting"
   ],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "side_panel": {
     "default_path": "templates/side-panel/index.html"
   },
